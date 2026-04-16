@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Pistis Place Timer</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Cinzel:wght@600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: #000;
+  }
+
+  #app {
+    width: 100vw; height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+    position: relative;
+  }
+
+  #app.red   { background: #b80000; }
+  #app.blink { animation: subtleBlink 0.9s ease-in-out infinite; }
+
+  @keyframes subtleBlink {
+    0%, 100% { background: #b80000; }
+    50%       { background: #7a0000; }
+  }
+
+  /* ── Church SVG background ── */
+  #churchBg {
+    position: absolute;
+    inset: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+  }
+
+  /* ── Branding ── */
+  #brand {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Cinzel', serif;
+    font-size: clamp(9px, 1.3vw, 18px);
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.16);
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  /* ── Reset button ── */
+  #resetBtn {
+    position: absolute;
+    top: 14px; right: 20px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    opacity: 0.3;
+    transition: opacity 0.2s, transform 0.25s;
+    padding: 6px;
+    z-index: 10;
+    color: #fff;
+  }
+  #resetBtn:hover { opacity: 0.8; transform: rotate(40deg); }
+  #resetBtn svg { width: 26px; height: 26px; display: block; }
+
+  /* ── Timer ── */
+  #timerWrap {
+    width: 93vw;
+    height: 93vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    position: relative;
+    z-index: 2;
+  }
+
+  #timerText {
+    color: #fff;
+    white-space: nowrap;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    user-select: none;
+  }
+
+  /* ── Hint ── */
+  #hint {
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: rgba(255,255,255,0.14);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    pointer-events: none;
+    white-space: nowrap;
+    font-family: 'Barlow Condensed', sans-serif;
+    z-index: 5;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Church background SVG -->
+  <svg id="churchBg" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="glowCenter" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="white" stop-opacity="0.035"/>
+        <stop offset="100%" stop-color="white" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+
+    <!-- Ambient center glow -->
+    <ellipse cx="500" cy="300" rx="400" ry="270" fill="url(#glowCenter)"/>
+
+    <!-- Large background cross -->
+    <g opacity="0.045" fill="white">
+      <rect x="474" y="50" width="52" height="500"/>
+      <rect x="270" y="185" width="460" height="52"/>
+    </g>
+
+    <!-- Rose window (gothic circle) -->
+    <g opacity="0.042" fill="none" stroke="white" stroke-width="1">
+      <circle cx="500" cy="300" r="230"/>
+      <circle cx="500" cy="300" r="185"/>
+      <circle cx="500" cy="300" r="140"/>
+      <circle cx="500" cy="300" r="95"/>
+      <circle cx="500" cy="300" r="50"/>
+      <!-- 12 spokes -->
+      <line x1="500" y1="70" x2="500" y2="530"/>
+      <line x1="270" y1="300" x2="730" y2="300"/>
+      <line x1="337" y1="137" x2="663" y2="463"/>
+      <line x1="663" y1="137" x2="337" y2="463"/>
+      <line x1="296" y1="215" x2="704" y2="385"/>
+      <line x1="704" y1="215" x2="296" y2="385"/>
+      <line x1="366" y1="88" x2="634" y2="512"/>
+      <line x1="634" y1="88" x2="366" y2="512"/>
+    </g>
+
+    <!-- Gothic pointed arches — top-left -->
+    <g opacity="0.04" fill="none" stroke="white" stroke-width="1.1">
+      <path d="M 10 260 Q 10 90 115 90 Q 220 90 220 260"/>
+      <path d="M 28 260 Q 28 108 115 108 Q 202 108 202 260"/>
+      <line x1="115" y1="90" x2="115" y2="10"/>
+      <rect x="97" y="4" width="36" height="14" rx="2"/>
+    </g>
+    <!-- Gothic pointed arches — top-right -->
+    <g opacity="0.04" fill="none" stroke="white" stroke-width="1.1">
+      <path d="M 990 260 Q 990 90 885 90 Q 780 90 780 260"/>
+      <path d="M 972 260 Q 972 108 885 108 Q 798 108 798 260"/>
+      <line x1="885" y1="90" x2="885" y2="10"/>
+      <rect x="867" y="4" width="36" height="14" rx="2"/>
+    </g>
+    <!-- Gothic pointed arches — bottom-left -->
+    <g opacity="0.04" fill="none" stroke="white" stroke-width="1.1">
+      <path d="M 10 340 Q 10 510 115 510 Q 220 510 220 340"/>
+      <path d="M 28 340 Q 28 492 115 492 Q 202 492 202 340"/>
+      <line x1="115" y1="510" x2="115" y2="590"/>
+    </g>
+    <!-- Gothic pointed arches — bottom-right -->
+    <g opacity="0.04" fill="none" stroke="white" stroke-width="1.1">
+      <path d="M 990 340 Q 990 510 885 510 Q 780 510 780 340"/>
+      <path d="M 972 340 Q 972 492 885 492 Q 798 492 798 340"/>
+      <line x1="885" y1="510" x2="885" y2="590"/>
+    </g>
+
+    <!-- Small crosses at four corners -->
+    <g opacity="0.06" fill="white">
+      <rect x="55" y="28" width="7" height="28"/><rect x="44" y="39" width="29" height="7"/>
+      <rect x="938" y="28" width="7" height="28"/><rect x="927" y="39" width="29" height="7"/>
+      <rect x="55" y="544" width="7" height="28"/><rect x="44" y="555" width="29" height="7"/>
+      <rect x="938" y="544" width="7" height="28"/><rect x="927" y="555" width="29" height="7"/>
+    </g>
+
+    <!-- Candles left and right -->
+    <g opacity="0.05" fill="white">
+      <rect x="68" y="318" width="9" height="55" rx="2"/>
+      <ellipse cx="72.5" cy="312" rx="6" ry="10"/>
+      <rect x="923" y="318" width="9" height="55" rx="2"/>
+      <ellipse cx="927.5" cy="312" rx="6" ry="10"/>
+    </g>
+
+    <!-- Simple dove (top center) -->
+    <g opacity="0.045" fill="white" transform="translate(466,16) scale(0.65)">
+      <path d="M 60 34 C 38 10 -2 16 0 36 C 2 52 22 56 44 46 L 62 64 L 56 42 C 72 48 94 36 88 20 C 82 4 66 12 60 34 Z"/>
+      <path d="M 28 36 C 16 20 2 26 8 42 Z"/>
+    </g>
+
+    <!-- Very subtle horizontal lines -->
+    <g opacity="0.025" stroke="white" stroke-width="0.7">
+      <line x1="0" y1="148" x2="1000" y2="148"/>
+      <line x1="0" y1="452" x2="1000" y2="452"/>
+    </g>
+  </svg>
+
+  <!-- Branding -->
+  <div id="brand">The Pistis Place Timer App</div>
+
+  <!-- Reset -->
+  <button id="resetBtn" title="Reset">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="1 4 1 10 7 10"/>
+      <path d="M3.51 15a9 9 0 1 0 .49-4.5"/>
+    </svg>
+  </button>
+
+  <!-- Timer -->
+  <div id="timerWrap">
+    <span id="timerText">00:00</span>
+  </div>
+
+  <div id="hint">↑ ↓ set minutes &nbsp;·&nbsp; space start / pause &nbsp;·&nbsp; r reset</div>
+</div>
+
+<script>
+(function () {
+  const MAX_MINS = 250;
+  let totalSeconds  = 0;
+  let elapsed       = 0;
+  let running       = false;
+  let countingDown  = false;
+  let blinkTimeout  = null;
+  let ticker        = null;
+  let lastBlinkMark = 0;
+
+  const app       = document.getElementById('app');
+  const timerText = document.getElementById('timerText');
+  const resetBtn  = document.getElementById('resetBtn');
+
+  function pad(n) { return String(Math.abs(n)).padStart(2, '0'); }
+
+  function formatTime(sec) {
+    const abs = Math.abs(sec);
+    const m = Math.floor(abs / 60);
+    const s = abs % 60;
+    return (countingDown ? '-' : '') + pad(m) + ':' + pad(s);
+  }
+
+  function fitText() {
+    const wrap = document.getElementById('timerWrap');
+    const ww = wrap.clientWidth, wh = wrap.clientHeight;
+    let lo = 10, hi = 2400;
+    timerText.style.fontSize = hi + 'px';
+    while (hi - lo > 1) {
+      const mid = Math.round((lo + hi) / 2);
+      timerText.style.fontSize = mid + 'px';
+      if (timerText.scrollWidth <= ww && timerText.scrollHeight <= wh) lo = mid;
+      else hi = mid;
+    }
+    timerText.style.fontSize = lo + 'px';
+  }
+
+  function render() {
+    timerText.textContent = formatTime(totalSeconds - elapsed);
+    fitText();
+  }
+
+  function startBlink() {
+    app.classList.remove('red');
+    app.classList.add('blink');
+    if (blinkTimeout) clearTimeout(blinkTimeout);
+    blinkTimeout = setTimeout(() => {
+      app.classList.remove('blink');
+      app.classList.add('red');
+    }, 5000);
+  }
+
+  function tick() {
+    elapsed++;
+    const remaining = totalSeconds - elapsed;
+    if (!countingDown && remaining < 0) {
+      countingDown = true;
+      lastBlinkMark = 0;
+      startBlink();
+    }
+    if (countingDown) {
+      const overtime = elapsed - totalSeconds;
+      const mark = Math.floor(overtime / 60);
+      if (mark > lastBlinkMark) { lastBlinkMark = mark; startBlink(); }
+    }
+    render();
+  }
+
+  function startTimer() {
+    if (totalSeconds === 0) return;
+    running = true;
+    ticker = setInterval(tick, 1000);
+  }
+
+  function pauseTimer() {
+    running = false;
+    clearInterval(ticker);
+    ticker = null;
+  }
+
+  function resetTimer() {
+    pauseTimer();
+    elapsed = 0; countingDown = false; lastBlinkMark = 0;
+    if (blinkTimeout) { clearTimeout(blinkTimeout); blinkTimeout = null; }
+    app.classList.remove('red', 'blink');
+    render();
+  }
+
+  function toggleStartPause() {
+    if (totalSeconds === 0) return;
+    if (running) pauseTimer(); else startTimer();
+  }
+
+  function adjustMinutes(delta) {
+    if (running || countingDown) return;
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    const newMins = Math.max(0, Math.min(MAX_MINS, mins + delta));
+    totalSeconds = newMins * 60 + secs;
+    elapsed = 0;
+    render();
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowUp')   { e.preventDefault(); adjustMinutes(1); }
+    if (e.key === 'ArrowDown') { e.preventDefault(); adjustMinutes(-1); }
+    if (e.key === ' ')         { e.preventDefault(); toggleStartPause(); }
+    if (e.key === 'r' || e.key === 'R') resetTimer();
+  });
+
+  resetBtn.addEventListener('click', resetTimer);
+  app.addEventListener('click', e => {
+    if (e.target === resetBtn || resetBtn.contains(e.target)) return;
+    toggleStartPause();
+  });
+
+  window.addEventListener('resize', render);
+  render();
+})();
+</script>
+</body>
+</html>
